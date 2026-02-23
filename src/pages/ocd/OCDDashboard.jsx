@@ -1,172 +1,152 @@
 import { useEffect, useMemo, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Shield, Plus, TimerReset, Brain, Flame, X } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { ArrowLeft, Shield, Waves, Sparkles, ListChecks, NotebookPen, Wind, Send } from "lucide-react";
 import { Link } from "react-router-dom";
 import styles from "./OCDDashboard.module.css";
 
-const HOURS = Array.from({ length: 24 }, (_, index) => index);
+const OCD_SCREENS = [
+  { id: "wave", label: "Wave-Rider", icon: Waves },
+  { id: "defusion", label: "Defusion", icon: Sparkles },
+  { id: "ladder", label: "ERP Ladder", icon: ListChecks },
+  { id: "journal", label: "Journal", icon: NotebookPen },
+];
 
-const exposureChallenges = {
-  1: "Touch a neutral object and wait 30 seconds before reassurance.",
-  2: "Leave one item slightly imperfect for 2 minutes.",
-  3: "Delay one checking ritual for 3 minutes.",
-  4: "Touch a low-trigger surface and delay washing for 5 minutes.",
-  5: "Send one message without rereading more than once.",
-  6: "Leave home after one lock check only.",
-  7: "Resist one reassurance question for 10 minutes.",
-  8: "Allow uncertainty on a medium trigger and observe sensations.",
-  9: "Do one high-trigger exposure with a 15-minute ritual delay.",
-  10: "Complete a full exposure and log urges without performing rituals.",
+const REASSURANCE_PATTERNS = [
+  /will i be okay\??/i,
+  /am i safe\??/i,
+  /did i do it right\??/i,
+  /can you promise/i,
+  /is everything fine\??/i,
+];
+
+const initialExposures = [
+  { id: 1, text: "Leave one item slightly misaligned for 60 seconds", done: false },
+  { id: 2, text: "Delay one checking ritual by 2 minutes", done: false },
+  { id: 3, text: "Touch a low-trigger surface and pause for one breath", done: false },
+];
+
+const formatTimer = (seconds) => {
+  const minutes = String(Math.floor(seconds / 60)).padStart(2, "0");
+  const remaining = String(seconds % 60).padStart(2, "0");
+  return `${minutes}:${remaining}`;
 };
 
-const formatTime = (totalSeconds) => {
-  const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
-  const seconds = String(totalSeconds % 60).padStart(2, "0");
-  return `${minutes}:${seconds}`;
-};
-
-const getStreaks = (hourStates) => {
-  let maxStreak = 0;
-  let currentStreak = 0;
-
-  HOURS.forEach((hour) => {
-    if (hourStates[hour] === "resisted") {
-      currentStreak += 1;
-      maxStreak = Math.max(maxStreak, currentStreak);
-    } else {
-      currentStreak = 0;
-    }
-  });
-
-  return { maxStreak, currentStreak };
+const reassureAwareReply = (entry) => {
+  if (REASSURANCE_PATTERNS.some((pattern) => pattern.test(entry))) {
+    return "That is an uncertainty we are learning to live with.";
+  }
+  return "Notice the thought, name the feeling, and return to your chosen action.";
 };
 
 export default function OCDDashboard() {
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [activeScreen, setActiveScreen] = useState("wave");
 
-  const [fearInput, setFearInput] = useState("");
-  const [fearRank, setFearRank] = useState(5);
-  const [triggerLadder, setTriggerLadder] = useState([]);
-  const [challengeMode, setChallengeMode] = useState(false);
+  const [waveActive, setWaveActive] = useState(false);
+  const [waveSeconds, setWaveSeconds] = useState(180);
 
-  const [timerDuration, setTimerDuration] = useState(180);
-  const [timeLeft, setTimeLeft] = useState(180);
-  const [timerRunning, setTimerRunning] = useState(false);
+  const [thoughtInput, setThoughtInput] = useState("");
+  const [thoughtBalloon, setThoughtBalloon] = useState("");
+  const [balloonDetached, setBalloonDetached] = useState(false);
 
-  const [sosOpen, setSosOpen] = useState(false);
-  const [intrusiveThought, setIntrusiveThought] = useState("");
-  const [labeledThought, setLabeledThought] = useState("");
+  const [microExposure, setMicroExposure] = useState("");
+  const [exposures, setExposures] = useState(initialExposures);
 
-  const [hourStates, setHourStates] = useState({});
+  const [journalInput, setJournalInput] = useState("");
+  const [journalEntries, setJournalEntries] = useState([]);
 
   useEffect(() => {
-    const loadTimeout = setTimeout(() => setIsLoading(false), 900);
-    return () => clearTimeout(loadTimeout);
+    const timeout = setTimeout(() => setLoading(false), 700);
+    return () => clearTimeout(timeout);
   }, []);
 
   useEffect(() => {
-    if (!timerRunning || timeLeft <= 0) {
+    if (!waveActive || waveSeconds <= 0) {
       return;
     }
 
-    const intervalId = setInterval(() => {
-      setTimeLeft((previous) => {
+    const id = setInterval(() => {
+      setWaveSeconds((previous) => {
         if (previous <= 1) {
-          setTimerRunning(false);
+          setWaveActive(false);
           return 0;
         }
         return previous - 1;
       });
     }, 1000);
 
-    return () => clearInterval(intervalId);
-  }, [timerRunning, timeLeft]);
+    return () => clearInterval(id);
+  }, [waveActive, waveSeconds]);
 
-  const latestRank = triggerLadder[0]?.rank ?? fearRank;
-  const activeChallenge = exposureChallenges[latestRank];
+  const liquidHeight = useMemo(() => {
+    const progress = ((180 - waveSeconds) / 180) * 100;
+    return Math.min(100, Math.max(10, progress));
+  }, [waveSeconds]);
 
-  const timerProgress = useMemo(() => {
-    const elapsed = timerDuration - timeLeft;
-    return Math.max(0, Math.min(100, (elapsed / timerDuration) * 100));
-  }, [timerDuration, timeLeft]);
+  const completedSteps = exposures.filter((item) => item.done).length;
 
-  const resistedCount = useMemo(
-    () => HOURS.filter((hour) => hourStates[hour] === "resisted").length,
-    [hourStates],
-  );
+  const toggleExposure = (id) => {
+    setExposures((previous) =>
+      previous.map((item) => (item.id === id ? { ...item, done: !item.done } : item)),
+    );
 
-  const performedCount = useMemo(
-    () => HOURS.filter((hour) => hourStates[hour] === "performed").length,
-    [hourStates],
-  );
+    if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
+      navigator.vibrate([8, 18, 8]);
+    }
+  };
 
-  const streaks = useMemo(() => getStreaks(hourStates), [hourStates]);
-
-  const addTrigger = () => {
-    if (!fearInput.trim()) {
+  const addExposure = () => {
+    if (!microExposure.trim()) {
       return;
     }
 
-    setTriggerLadder((previous) => [
+    setExposures((previous) => [
+      ...previous,
       {
         id: Date.now(),
-        fear: fearInput.trim(),
-        rank: fearRank,
+        text: microExposure.trim(),
+        done: false,
+      },
+    ]);
+    setMicroExposure("");
+  };
+
+  const createBalloon = () => {
+    if (!thoughtInput.trim()) {
+      return;
+    }
+    setThoughtBalloon(`I am having the thought that ${thoughtInput.trim()}.`);
+    setBalloonDetached(false);
+  };
+
+  const releaseBalloon = () => {
+    setBalloonDetached(true);
+  };
+
+  const addJournalEntry = () => {
+    if (!journalInput.trim()) {
+      return;
+    }
+
+    const content = journalInput.trim();
+    const reply = reassureAwareReply(content);
+
+    setJournalEntries((previous) => [
+      {
+        id: Date.now(),
+        content,
+        reply,
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       },
       ...previous,
     ]);
 
-    setFearInput("");
+    setJournalInput("");
   };
-
-  const removeTrigger = (id) => {
-    setTriggerLadder((previous) => previous.filter((item) => item.id !== id));
-  };
-
-  const resetTimer = () => {
-    setTimerRunning(false);
-    setTimeLeft(timerDuration);
-  };
-
-  const setQuickTimer = (seconds) => {
-    setTimerDuration(seconds);
-    setTimeLeft(seconds);
-    setTimerRunning(false);
-  };
-
-  const toggleHourState = (hour) => {
-    setHourStates((previous) => {
-      const current = previous[hour];
-      const next = { ...previous };
-
-      if (!current) {
-        next[hour] = "resisted";
-      } else if (current === "resisted") {
-        next[hour] = "performed";
-      } else {
-        delete next[hour];
-      }
-
-      return next;
-    });
-  };
-
-  const applyLabeler = () => {
-    if (!intrusiveThought.trim()) {
-      setLabeledThought("");
-      return;
-    }
-
-    setLabeledThought(`I am having the thought that ${intrusiveThought.trim()}.`);
-  };
-
-  const circleRadius = 72;
-  const circleCircumference = 2 * Math.PI * circleRadius;
-  const circleOffset = circleCircumference - (timerProgress / 100) * circleCircumference;
 
   return (
-    <div className={styles.moduleShell}>
-      <div className={styles.topRow}>
+    <div className={styles.appShell}>
+      <div className={styles.topBar}>
         <Link to="/" className={styles.backLink}>
           <ArrowLeft size={18} />
           Back to Modes
@@ -174,253 +154,261 @@ export default function OCDDashboard() {
       </div>
 
       <motion.section
-        className={styles.heroCard}
+        className={styles.hero}
         initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35 }}
+        transition={{ duration: 0.3 }}
       >
-        <div className={styles.heroIconWrap}>
-          <Shield size={26} />
+        <div className={styles.heroIcon}>
+          <Shield size={24} />
         </div>
         <div>
-          <h1 className={styles.heroTitle}>MindBridge</h1>
-          <p className={styles.heroSubtitle}>Transition from compulsion to observation and resistance.</p>
+          <h1>MindBridge</h1>
+          <p>The Safe Space — gentle, non-triggering support for uncertainty and resistance.</p>
         </div>
       </motion.section>
 
-      {isLoading ? (
-        <div className={styles.loadingGrid}>
-          {Array.from({ length: 4 }).map((_, index) => (
-            <div key={index} className={styles.skeletonCard} />
-          ))}
+      <nav className={styles.screenTabs} aria-label="MindBridge workspace screens">
+        {OCD_SCREENS.map((screen) => {
+          const Icon = screen.icon;
+          const selected = activeScreen === screen.id;
+          return (
+            <button
+              key={screen.id}
+              className={styles.tabButton}
+              onClick={() => setActiveScreen(screen.id)}
+              aria-pressed={selected}
+            >
+              {selected && <motion.span layoutId="ocd-tab-highlight" className={styles.tabHighlight} />}
+              <Icon size={16} />
+              <span>{screen.label}</span>
+            </button>
+          );
+        })}
+      </nav>
+
+      {loading ? (
+        <div className={styles.skeletonGrid}>
+          <div className={styles.skeletonCard} />
+          <div className={styles.skeletonCard} />
         </div>
       ) : (
-        <>
-          <div className={styles.grid}>
+        <AnimatePresence mode="wait">
+          {activeScreen === "wave" && (
             <motion.section
-              className={styles.glassCard}
-              initial={{ opacity: 0, y: 16 }}
+              key="wave"
+              className={styles.card}
+              initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35, delay: 0.05 }}
+              exit={{ opacity: 0, y: -8 }}
             >
               <header className={styles.cardHeader}>
-                <Brain size={18} />
-                <h2>Dynamic ERP Engine</h2>
+                <Wind size={18} />
+                <h2>Wave-Rider Timer</h2>
               </header>
 
-              <label className={styles.label}>Trigger / Fear</label>
-              <input
-                className={styles.input}
-                value={fearInput}
-                onChange={(event) => setFearInput(event.target.value)}
-                placeholder="Example: If I don't check the lock, something bad will happen"
-              />
+              <p className={styles.helper}>Press "Ride the Wave" and follow the liquid breath rhythm for 3 minutes.</p>
 
-              <div className={styles.rankRow}>
-                <label className={styles.label}>Fear Rank</label>
-                <span className={styles.rankChip}>{fearRank}/10</span>
+              <div className={styles.liquidFrame} role="img" aria-label={`Urge surfing timer at ${formatTimer(waveSeconds)}`}>
+                <div className={styles.liquidTimer}>{formatTimer(waveSeconds)}</div>
+                <motion.div
+                  className={styles.liquidSurface}
+                  animate={{ height: `${liquidHeight}%` }}
+                  transition={{ duration: 0.8, ease: "easeInOut" }}
+                >
+                  <motion.svg viewBox="0 0 300 80" className={styles.liquidWave} preserveAspectRatio="none">
+                    <motion.path
+                      d="M0,40 C35,20 70,20 105,40 C140,60 175,60 210,40 C245,20 280,20 315,40 L315,80 L0,80 Z"
+                      animate={{ x: [0, -50, 0] }}
+                      transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
+                    />
+                  </motion.svg>
+                </motion.div>
               </div>
-              <input
-                className={styles.slider}
-                type="range"
-                min={1}
-                max={10}
-                value={fearRank}
-                onChange={(event) => setFearRank(Number(event.target.value))}
+
+              <div className={styles.waveActions}>
+                <button
+                  className={styles.primaryAction}
+                  onClick={() => {
+                    if (!waveActive && waveSeconds === 0) {
+                      setWaveSeconds(180);
+                    }
+                    setWaveActive((value) => !value);
+                  }}
+                >
+                  {waveActive ? "Pause" : "Ride the Wave"}
+                </button>
+                <button
+                  className={styles.secondaryAction}
+                  onClick={() => {
+                    setWaveActive(false);
+                    setWaveSeconds(180);
+                  }}
+                >
+                  Reset
+                </button>
+              </div>
+            </motion.section>
+          )}
+
+          {activeScreen === "defusion" && (
+            <motion.section
+              key="defusion"
+              className={styles.card}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+            >
+              <header className={styles.cardHeader}>
+                <Sparkles size={18} />
+                <h2>Cognitive Defusion Workspace</h2>
+              </header>
+
+              <label htmlFor="thoughtBalloon" className={styles.label}>Intrusive thought</label>
+              <textarea
+                id="thoughtBalloon"
+                className={styles.textInput}
+                value={thoughtInput}
+                onChange={(event) => setThoughtInput(event.target.value)}
+                placeholder="Write the thought exactly as it appears..."
               />
 
-              <button className={styles.primaryButton} onClick={addTrigger}>
-                <Plus size={16} />
-                Add to Trigger Ladder
-              </button>
+              <div className={styles.inlineActions}>
+                <button className={styles.primaryAction} onClick={createBalloon}>Create Thought Balloon</button>
+                <button className={styles.secondaryAction} onClick={releaseBalloon}>Let It Float Away</button>
+              </div>
 
-              <div className={styles.ladderList}>
-                {triggerLadder.length === 0 && <p className={styles.empty}>No triggers yet. Start by adding one.</p>}
-                {triggerLadder.map((item) => (
-                  <div key={item.id} className={styles.ladderItem}>
-                    <div>
-                      <p className={styles.ladderFear}>{item.fear}</p>
-                      <div className={styles.progressBar}>
-                        <div className={styles.progressFill} style={{ width: `${item.rank * 10}%` }} />
-                      </div>
-                    </div>
-                    <div className={styles.itemActions}>
-                      <span className={styles.rankChip}>{item.rank}</span>
-                      <button className={styles.iconButton} onClick={() => removeTrigger(item.id)} aria-label="Remove trigger">
-                        <X size={14} />
-                      </button>
-                    </div>
+              <div className={styles.balloonStage} aria-live="polite">
+                {thoughtBalloon ? (
+                  <motion.div
+                    className={styles.balloon}
+                    drag
+                    dragElastic={0.4}
+                    initial={{ opacity: 0, y: 30, scale: 0.9 }}
+                    animate={
+                      balloonDetached
+                        ? {
+                            y: [-10, -180],
+                            x: [0, 14, -12, 20],
+                            opacity: [1, 1, 0.2],
+                            scale: [1, 1.05, 0.95],
+                          }
+                        : {
+                            y: [0, -6, 0],
+                            rotate: [0, 1.5, -1.5, 0],
+                          }
+                    }
+                    transition={{ duration: balloonDetached ? 4.2 : 3, repeat: balloonDetached ? 0 : Infinity }}
+                  >
+                    <p>{thoughtBalloon}</p>
+                    <span>Drag to observe, not obey.</span>
+                  </motion.div>
+                ) : (
+                  <p className={styles.emptyHint}>Your thought balloon appears here.</p>
+                )}
+              </div>
+            </motion.section>
+          )}
+
+          {activeScreen === "ladder" && (
+            <motion.section
+              key="ladder"
+              className={styles.card}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+            >
+              <header className={styles.cardHeader}>
+                <ListChecks size={18} />
+                <h2>ERP Exposure Ladder</h2>
+              </header>
+
+              <div className={styles.ladderTop}>
+                <div>
+                  <strong>{completedSteps}/{exposures.length}</strong>
+                  <span> Micro-exposures completed</span>
+                </div>
+                <div className={styles.softHaptic}>Soft Success haptics enabled</div>
+              </div>
+
+              <div className={styles.stepper}>
+                {exposures.map((item, index) => (
+                  <div key={item.id} className={styles.stepRow}>
+                    <button
+                      className={`${styles.stepDot} ${item.done ? styles.stepDone : ""}`}
+                      onClick={() => toggleExposure(item.id)}
+                      aria-label={`Mark exposure ${index + 1} as ${item.done ? "not completed" : "completed"}`}
+                    >
+                      {index + 1}
+                    </button>
+                    <p>{item.text}</p>
                   </div>
                 ))}
               </div>
 
-              <button className={styles.secondaryButton} onClick={() => setChallengeMode((value) => !value)}>
-                {challengeMode ? "Hide Challenge Mode" : "Enable Challenge Mode"}
-              </button>
-
-              <AnimatePresence>
-                {challengeMode && (
-                  <motion.div
-                    className={styles.challengeBox}
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.25 }}
-                  >
-                    <p className={styles.challengeLabel}>Challenge for Rank {latestRank}</p>
-                    <p>{activeChallenge}</p>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              <div className={styles.exposureComposer}>
+                <input
+                  className={styles.textInput}
+                  value={microExposure}
+                  onChange={(event) => setMicroExposure(event.target.value)}
+                  placeholder='Add micro-exposure: "Delay hand washing for 2 minutes"'
+                />
+                <button className={styles.primaryAction} onClick={addExposure}>Add Step</button>
+              </div>
             </motion.section>
+          )}
 
+          {activeScreen === "journal" && (
             <motion.section
-              className={styles.glassCard}
-              initial={{ opacity: 0, y: 16 }}
+              key="journal"
+              className={styles.card}
+              initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35, delay: 0.1 }}
+              exit={{ opacity: 0, y: -8 }}
             >
               <header className={styles.cardHeader}>
-                <TimerReset size={18} />
-                <h2>Ritual Delayer — Wave Rider</h2>
+                <NotebookPen size={18} />
+                <h2>Anti-Reassurance Journal</h2>
               </header>
 
-              <div className={styles.timerWrap}>
-                <svg width="180" height="180" viewBox="0 0 180 180" className={styles.timerSvg}>
-                  <circle className={styles.timerTrack} cx="90" cy="90" r={circleRadius} />
-                  <circle
-                    className={styles.timerProgress}
-                    cx="90"
-                    cy="90"
-                    r={circleRadius}
-                    strokeDasharray={circleCircumference}
-                    strokeDashoffset={circleOffset}
-                  />
-                </svg>
-                <div className={styles.timerCenter}>{formatTime(timeLeft)}</div>
-              </div>
+              <label htmlFor="journalInput" className={styles.label}>Thought or question</label>
+              <textarea
+                id="journalInput"
+                className={styles.textInput}
+                value={journalInput}
+                onChange={(event) => setJournalInput(event.target.value)}
+                placeholder="Write what your mind is asking right now..."
+              />
 
-              <div className={styles.quickActions}>
-                <button className={styles.quickButton} onClick={() => setQuickTimer(120)}>
-                  2 min
-                </button>
-                <button className={styles.quickButton} onClick={() => setQuickTimer(180)}>
-                  3 min
-                </button>
-                <button className={styles.quickButton} onClick={() => setQuickTimer(300)}>
-                  5 min
-                </button>
-              </div>
+              <button className={styles.primaryAction} onClick={addJournalEntry}>
+                <Send size={16} />
+                Process Entry
+              </button>
 
-              <div className={styles.timerActions}>
-                <button className={styles.primaryButton} onClick={() => setTimerRunning((value) => !value)}>
-                  {timerRunning ? "Pause" : "Start Delay"}
-                </button>
-                <button className={styles.secondaryButton} onClick={resetTimer}>
-                  Reset
-                </button>
-              </div>
-
-              <div className={styles.wavePanel}>
-                <p className={styles.wavePrompt}>Breathe with the wave</p>
-                <svg viewBox="0 0 300 64" className={styles.waveSvg} preserveAspectRatio="none" aria-hidden="true">
-                  <path d="M0,32 C25,10 50,10 75,32 C100,54 125,54 150,32 C175,10 200,10 225,32 C250,54 275,54 300,32" />
-                  <path d="M0,34 C25,56 50,56 75,34 C100,12 125,12 150,34 C175,56 200,56 225,34 C250,12 275,12 300,34" />
-                </svg>
+              <div className={styles.journalFeed}>
+                {journalEntries.length === 0 && <p className={styles.emptyHint}>Entries appear here with uncertainty-first responses.</p>}
+                {journalEntries.map((entry) => (
+                  <article key={entry.id} className={styles.journalCard}>
+                    <div className={styles.journalMeta}>{entry.timestamp}</div>
+                    <p className={styles.journalUser}>{entry.content}</p>
+                    <p className={styles.journalReply}>{entry.reply}</p>
+                  </article>
+                ))}
               </div>
             </motion.section>
-          </div>
-
-          <motion.section
-            className={styles.glassCard}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35, delay: 0.15 }}
-          >
-            <header className={styles.cardHeader}>
-              <Flame size={18} />
-              <h2>Compulsion Heatmap & Analytics</h2>
-            </header>
-
-            <div className={styles.analyticsRow}>
-              <div className={styles.metricCard}>
-                <span>Resisted</span>
-                <strong>{resistedCount}</strong>
-              </div>
-              <div className={styles.metricCard}>
-                <span>Performed</span>
-                <strong>{performedCount}</strong>
-              </div>
-              <div className={styles.metricCard}>
-                <span>Current Streak</span>
-                <strong>{streaks.currentStreak}h</strong>
-              </div>
-              <div className={styles.metricCard}>
-                <span>Best Streak</span>
-                <strong>{streaks.maxStreak}h</strong>
-              </div>
-            </div>
-
-            <div className={styles.heatmapLegend}>
-              <span><i className={styles.legendResisted} />Resisted</span>
-              <span><i className={styles.legendPerformed} />Performed</span>
-            </div>
-
-            <div className={styles.heatmapGrid}>
-              {HOURS.map((hour) => {
-                const value = hourStates[hour];
-                return (
-                  <button
-                    key={hour}
-                    className={`${styles.heatCell} ${value === "resisted" ? styles.resisted : ""} ${value === "performed" ? styles.performed : ""}`}
-                    onClick={() => toggleHourState(hour)}
-                    title={`${String(hour).padStart(2, "0")}:00`}
-                  >
-                    <span>{hour}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </motion.section>
-        </>
+          )}
+        </AnimatePresence>
       )}
 
-      <button className={styles.sosFab} onClick={() => setSosOpen(true)} aria-label="Open ACT SOS labeler">
-        ACT SOS
-      </button>
-
       <AnimatePresence>
-        {sosOpen && (
+        {waveActive && (
           <motion.div
-            className={styles.modalBackdrop}
+            className={styles.dimmingLayer}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={() => setSosOpen(false)}
-          >
-            <motion.div
-              className={styles.modalCard}
-              initial={{ scale: 0.92, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.96, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              onClick={(event) => event.stopPropagation()}
-            >
-              <h3>Intrusive Thought Labeler</h3>
-              <p>Create distance by naming the thought, not becoming the thought.</p>
-              <textarea
-                className={styles.textarea}
-                value={intrusiveThought}
-                onChange={(event) => setIntrusiveThought(event.target.value)}
-                placeholder="Type the intrusive thought here..."
-              />
-              <div className={styles.modalActions}>
-                <button className={styles.primaryButton} onClick={applyLabeler}>Label Thought</button>
-                <button className={styles.secondaryButton} onClick={() => setSosOpen(false)}>Close</button>
-              </div>
-              {labeledThought && <div className={styles.labeledThought}>{labeledThought}</div>}
-            </motion.div>
-          </motion.div>
+            aria-hidden="true"
+          />
         )}
       </AnimatePresence>
     </div>
