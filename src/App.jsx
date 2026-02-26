@@ -15,6 +15,8 @@ import FocusSessions from "./pages/adhd/FocusSessions";
 import Soundscapes from "./pages/adhd/Soundscapes";
 import BodyDoubling from "./pages/adhd/BodyDoubling";
 import DyslexiaPage from "./pages/DyslexiaPage";
+import ReaderMode from "./pages/dyslexia/ReaderMode";
+import WordBank from "./pages/dyslexia/WordBank";
 import DyscalculiaPage from "./pages/DyscalculiaPage";
 import APDPage from "./pages/APDPage";
 import TourettesPage from "./pages/TourettesPage";
@@ -49,6 +51,8 @@ const App = () => (
             <Route path="/adhd/doubling" element={<BodyDoubling />} />
             <Route path="/adhd/emotion-coach" element={<EmotionCoach />} />
             <Route path="/dyslexia" element={<DyslexiaPage />} />
+            <Route path="/dyslexia/reader" element={<ReaderMode />} />
+            <Route path="/dyslexia/word-bank" element={<WordBank />} />
             <Route path="/dyscalculia" element={<DyscalculiaPage />} />
             <Route path="/ocd" element={<OCDDashboard />} />
             <Route path="/ocd/erp-hierarchy" element={<ERPHierarchy />} />

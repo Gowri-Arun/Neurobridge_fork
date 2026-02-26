@@ -1,0 +1,187 @@
+/**
+ * ReaderMode Styles
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=OpenDyslexic&display=swap');
+
+.reader-mode {
+  transition: all 0.3s ease;
+}
+
+.reader-mode-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid #e0e7ff;
+}
+
+.reading-container {
+  width: 100%;
+  border-radius: 0.5rem;
+  border: 2px solid #bfdbfe;
+  background: white;
+}
+
+.reading-text {
+  color: #1f2937;
+  line-height: 1.625;
+}
+
+.word-highlighted {
+  background: #facc15;
+  font-weight: 600;
+  padding: 0 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.word-highlighted:hover {
+  background: #eab308;
+  transform: scale(1.05);
+}
+
+.sentence-container {
+  margin-bottom: 1.5rem;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  transition: background-color 0.2s ease;
+}
+
+.sentence-container:hover {
+  background: #f0f9ff;
+}
+
+.struggle-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.struggle-decoding {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.struggle-word {
+  background: #fed7aa;
+  color: #92400e;
+}
+
+.struggle-comprehension {
+  background: #f3e8ff;
+  color: #581c87;
+}
+
+.struggle-auditory {
+  background: #dbeafe;
+  color: #0c4a6e;
+}
+
+/* Adaptive font support */
+body.dyslexic-font, 
+.dyslexic-font {
+  font-family: 'OpenDyslexic', 'OpenDyslexicMono', monospace;
+}
+
+/* Animation for incoming struggles */
+@keyframes slideInDanger {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.struggle-indicator {
+  animation: slideInDanger 0.3s ease-out;
+}
+
+/* Focus mode for minimal distractions */
+.reader-focus-mode {
+  background: white;
+}
+
+.reader-focus-mode .sentence-container {
+  padding: 1rem;
+  margin-bottom: 2rem;
+}
+
+/* Accessibility - High contrast mode */
+@media (prefers-contrast: more) {
+  .reading-text {
+    font-weight: 700;
+  }
+  
+  .word-highlighted {
+    border: 2px solid #1f2937;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .reading-container {
+    background: #111827;
+    border-color: #374151;
+  }
+  
+  .reading-text {
+    color: #f3f4f6;
+  }
+  
+  .sentence-container {
+    background: transparent;
+  }
+
+  .sentence-container:hover {
+    background: #1f2937;
+  }
+
+  .word-highlighted {
+    background: #b45309;
+    color: white;
+  }
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .reading-container {
+    min-height: 24rem;
+  }
+  
+  .reading-text {
+    font-size: 1rem;
+  }
+  
+  .sentence-container {
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+  }
+}
+
+/* Print styles */
+@media print {
+  .reader-mode-header,
+  .sidebar,
+  button,
+  [role="button"] {
+    display: none !important;
+  }
+  
+  .reading-text {
+    color: black;
+  }
+  
+  .word-highlighted {
+    background: transparent;
+    border-bottom: 2px solid black;
+  }
+}
+
