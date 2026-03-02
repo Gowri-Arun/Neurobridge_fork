@@ -9,7 +9,7 @@ export default defineConfig({
         environment: "jsdom",
         globals: true,
         setupFiles: ["./src/test/setup.js"],
-        include: ["src/**/*.{test,spec}.{js,jsx}"],
+        include: ["src/**/*.{test,spec}.{js,jsx}", "mobile/src/**/*.{test,spec}.{ts,tsx}"],
     },
     resolve: {
         alias: { "@": path.resolve(__dirname, "./src") },
