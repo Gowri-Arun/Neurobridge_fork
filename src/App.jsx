@@ -18,7 +18,7 @@ import DyslexiaPage from "./pages/DyslexiaPage";
 import ReaderMode from "./pages/dyslexia/ReaderMode";
 import WordBank from "./pages/dyslexia/WordBank";
 import DyscalculiaPage from "./pages/DyscalculiaPage";
-import APDPage from "./pages/APDPage";
+import AnxietyPage from "./pages/AnxietyPage";
 import TourettesPage from "./pages/TourettesPage";
 import OCDDashboard from "./pages/ocd/OCDDashboard";
 import ERPHierarchy from "./pages/ocd/ERPHierarchy";
@@ -64,7 +64,7 @@ const App = () => (
             <Route path="/dyspraxia/haptic-pacer" element={<HapticPacer />} />
             <Route path="/dyspraxia/ar-instructions" element={<ARInstructionCards />} />
             <Route path="/dyspraxia/safe-route" element={<SafeRoutePlanner />} />
-            <Route path="/apd" element={<APDPage />} />
+            <Route path="/anxiety" element={<AnxietyPage />} />
             <Route path="/tourettes" element={<TourettesPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

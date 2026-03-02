@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Brain, Zap, BookOpen, Calculator, Shield, Hand, Ear, Sparkles, } from "lucide-react";
+import { Brain, Zap, BookOpen, Calculator, Shield, Hand, Wind, Sparkles, } from "lucide-react";
 const modes = [
     {
         id: "asd",
@@ -50,12 +50,12 @@ const modes = [
         path: "/dyspraxia",
     },
     {
-        id: "apd",
-        title: "APD",
-        subtitle: "Auditory Processing",
-        icon: Ear,
-        color: "bg-mode-apd",
-        path: "/apd",
+      id: "anxiety",
+      title: "Anxiety",
+      subtitle: "CalmFlow Toolkit",
+      icon: Wind,
+      color: "bg-mode-ocd",
+      path: "/anxiety",
     },
     {
         id: "tourettes",
