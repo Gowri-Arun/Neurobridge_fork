@@ -43,6 +43,23 @@ export default function Login() {
 
   const from = location.state?.from?.pathname;
   const roleConfig = ROLES.find((r) => r.id === selectedRole);
+  const ACCOUNT_EMAIL_MAP = {
+    "riya@neurobridge.in": { role: "user", accountKey: "user_asd_anxiety" },
+    "neha.guardian@neurobridge.in": { role: "guardian", accountKey: "guardian_asd_anxiety" },
+  };
+
+  function inferAccountKey(role, rawEmail, rawCareLinkId) {
+    const normalizedEmail = String(rawEmail || "").toLowerCase().trim();
+    const normalizedCareLink = String(rawCareLinkId || "").toUpperCase().trim();
+
+    if (normalizedEmail.includes("neha") || normalizedCareLink === "CL-RIYA-0088") {
+      return "guardian_asd_anxiety";
+    }
+    if (normalizedEmail.includes("riya")) {
+      return role === "guardian" ? "guardian_asd_anxiety" : "user_asd_anxiety";
+    }
+    return role;
+  }
 
   function getRedirectPath(user) {
     if (user.role === "admin") return "/admin";
@@ -55,7 +72,8 @@ export default function Login() {
     setError("");
     setLoadingRole(role);
     try {
-      const user = await login(role, options);
+      const accountKey = inferAccountKey(role, options.email, options.careLinkId);
+      const user = await login(role, { ...options, accountKey });
       navigate(getRedirectPath(user), { replace: true });
     } catch (e) {
       setError(e.message || "Login failed. Please try again.");
@@ -68,22 +86,35 @@ export default function Login() {
     e.preventDefault();
     if (!email || !password) { setError("Please enter your credentials."); return; }
     const normalizedEmail = email.toLowerCase().trim();
+    const normalizedCareLink = careLinkId.toUpperCase().trim();
     let role = selectedRole;
+    let accountKey;
 
-    if (normalizedEmail.includes("admin")) {
+    const mapped = ACCOUNT_EMAIL_MAP[normalizedEmail];
+    if (mapped) {
+      role = mapped.role;
+      accountKey = mapped.accountKey;
+    }
+
+    if (!accountKey && normalizedEmail.includes("admin")) {
       role = "admin";
-    } else if (
+    } else if (!accountKey && (
       normalizedEmail.includes("guardian") ||
       normalizedEmail.includes("suma") ||
       normalizedEmail.includes("neha") ||
       careLinkId.trim().length > 0
-    ) {
+    )) {
       role = "guardian";
-    } else if (normalizedEmail.includes("riya")) {
+    } else if (!accountKey && normalizedEmail.includes("riya")) {
       role = "user";
     }
 
-    await handleDemoLogin(role, { email, careLinkId });
+    if (!accountKey && normalizedCareLink === "CL-RIYA-0088") {
+      role = "guardian";
+      accountKey = "guardian_asd_anxiety";
+    }
+
+    await handleDemoLogin(role, { email, careLinkId, accountKey });
   }
 
   return (

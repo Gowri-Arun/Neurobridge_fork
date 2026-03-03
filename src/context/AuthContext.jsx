@@ -162,11 +162,23 @@ export const MOCK_WARD_ACTIVITY = {
 };
 
 function resolveMockAccountKey(role, options = {}) {
-  const email = String(options.email || "").toLowerCase();
+  const email = String(options.email || "").toLowerCase().trim();
   const careLinkId = String(options.careLinkId || "").toUpperCase();
 
+  if (email.includes("riya")) {
+    return role === "guardian" ? "guardian_asd_anxiety" : "user_asd_anxiety";
+  }
+
+  if (email.includes("neha")) {
+    return "guardian_asd_anxiety";
+  }
+
+  if (careLinkId === "CL-RIYA-0088") {
+    return "guardian_asd_anxiety";
+  }
+
   if (role === "user") {
-    if (email.includes("riya") || email.includes("anxiety") || email.includes("asd")) {
+    if (email.includes("anxiety") || email.includes("asd")) {
       return "user_asd_anxiety";
     }
     return "user";
@@ -232,7 +244,7 @@ export function AuthProvider({ children }) {
   const login = useCallback((role, options = {}) => {
     return new Promise((resolve, reject) => {
       setTimeout(() => {
-        const accountKey = resolveMockAccountKey(role, options);
+        const accountKey = options.accountKey || resolveMockAccountKey(role, options);
         const mockUser = MOCK_USERS[accountKey];
         if (!mockUser) {
           reject(new Error("Invalid role"));
