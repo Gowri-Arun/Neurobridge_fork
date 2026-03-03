@@ -28,17 +28,32 @@ import EmotionCoach from "./pages/adhd/EmotionCoach";
 import VisualTimeline from "./pages/adhd/VisualTimeline";
 import TaskBreakdown from "./pages/adhd/TaskBreakdown";
 import FocusSessions from "./pages/adhd/FocusSessions";
-import Soundscapes from "./pages/adhd/SoundScapes";
+import Soundscapes from "./pages/adhd/Soundscapes";
 import BodyDoubling from "./pages/adhd/BodyDoubling";
 
 // ── Dyslexia ─────────────────────────────────
 import DyslexiaPage from "./pages/DyslexiaPage";
+<<<<<<< Updated upstream
 import ReaderMode from "./pages/dyslexia/ReaderMode";
 import WordBank from "./pages/dyslexia/WordBank";
 
 // ── Other conditions ─────────────────────────
 import DyscalculiaPage from "./pages/DyscalculiaPage";
 import AnxietyPage from "./pages/AnxietyPage";
+=======
+import AdaptiveReadingIntelligence from "./pages/dyslexia/AdaptiveReadingIntelligence";
+import PhonologicalTrainingGenerator from "./pages/dyslexia/PhonologicalTrainingGenerator";
+import MultiSensoryReinforcementMode from "./pages/dyslexia/MultiSensoryReinforcementMode";
+import DyslexiaWritingAssistant from "./pages/dyslexia/DyslexiaWritingAssistant";
+import AIPersonalLearningProfile from "./pages/dyslexia/AIPersonalLearningProfile";
+import DyscalculiaPage from "./pages/DyscalculiaPage";
+import NumberSenseEngine from "./pages/dyscalculia/NumberSenseEngine";
+import GuidedStepPractice from "./pages/dyscalculia/GuidedStepPractice";
+import RealLifeMathSimulator from "./pages/dyscalculia/RealLifeMathSimulator";
+import CalmMode from "./pages/dyscalculia/CalmMode";
+import PatternRecognitionTrainer from "./pages/dyscalculia/PatternRecognitionTrainer";
+import APDPage from "./pages/APDPage";
+>>>>>>> Stashed changes
 import TourettesPage from "./pages/TourettesPage";
 
 // ── OCD ──────────────────────────────────────
@@ -118,6 +133,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
+<<<<<<< Updated upstream
             {/* Public — no layout, no auth required */}
             <Route path="/login" element={<Login />} />
 
@@ -133,6 +149,42 @@ const App = () => (
 
             {/* Everything else goes through the sidebar shell */}
             <Route path="/*" element={<ShellRoutes />} />
+=======
+            <Route path="/" element={<Index />} />
+            <Route path="/asd" element={<ASDPage />} />
+            <Route path="/adhd" element={<ADHDDashboard />} />
+            <Route path="/adhd/timeline" element={<VisualTimeline />} />
+            <Route path="/adhd/breakdown" element={<TaskBreakdown />} />
+            <Route path="/adhd/focus" element={<FocusSessions />} />
+            <Route path="/adhd/sounds" element={<Soundscapes />} />
+            <Route path="/adhd/doubling" element={<BodyDoubling />} />
+            <Route path="/adhd/emotion-coach" element={<EmotionCoach />} />
+            <Route path="/dyslexia" element={<DyslexiaPage />} />
+            <Route path="/dyslexia/adaptive-reading" element={<AdaptiveReadingIntelligence />} />
+            <Route path="/dyslexia/phonology" element={<PhonologicalTrainingGenerator />} />
+            <Route path="/dyslexia/reinforcement" element={<MultiSensoryReinforcementMode />} />
+            <Route path="/dyslexia/writing-assistant" element={<DyslexiaWritingAssistant />} />
+            <Route path="/dyslexia/personal-profile" element={<AIPersonalLearningProfile />} />
+            <Route path="/dyscalculia" element={<DyscalculiaPage />} />
+            <Route path="/dyscalculia/number-sense" element={<NumberSenseEngine />} />
+            <Route path="/dyscalculia/step-practice" element={<GuidedStepPractice />} />
+            <Route path="/dyscalculia/real-life-math" element={<RealLifeMathSimulator />} />
+            <Route path="/dyscalculia/calm-mode" element={<CalmMode />} />
+            <Route path="/dyscalculia/patterns" element={<PatternRecognitionTrainer />} />
+            <Route path="/ocd" element={<OCDDashboard />} />
+            <Route path="/ocd/erp-hierarchy" element={<ERPHierarchy />} />
+            <Route path="/ocd/ritual-delayer" element={<RitualDelayer />} />
+            <Route path="/ocd/compulsion-heatmap" element={<CompulsionHeatmap />} />
+            <Route path="/ocd/logic-journal" element={<LogicCheckJournal />} />
+            <Route path="/dyspraxia" element={<DyspraxiaDashboard />} />
+            <Route path="/dyspraxia/aomi-library" element={<AOMILibrary />} />
+            <Route path="/dyspraxia/haptic-pacer" element={<HapticPacer />} />
+            <Route path="/dyspraxia/ar-instructions" element={<ARInstructionCards />} />
+            <Route path="/dyspraxia/safe-route" element={<SafeRoutePlanner />} />
+            <Route path="/apd" element={<APDPage />} />
+            <Route path="/tourettes" element={<TourettesPage />} />
+            <Route path="*" element={<NotFound />} />
+>>>>>>> Stashed changes
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
