@@ -47,8 +47,9 @@ export default function Login() {
   function getRedirectPath(user) {
     if (user.role === "admin") return "/admin";
     if (user.role === "guardian") return "/guardian-dashboard";
-    const dest = from && from !== "/login" ? from : user.selectedProfile ? `/${user.selectedProfile}` : "/";
-    return dest;
+    // Always show disorder selection on every login so users can review/update
+    // their plan before entering the app.
+    return "/onboarding/disorders";
   }
 
   async function handleDemoLogin(role, options = {}) {
