@@ -67,9 +67,22 @@ export default function Login() {
   async function handleFormSubmit(e) {
     e.preventDefault();
     if (!email || !password) { setError("Please enter your credentials."); return; }
+    const normalizedEmail = email.toLowerCase().trim();
     let role = selectedRole;
-    if (email.includes("admin")) role = "admin";
-    else if (email.includes("guardian") || email.includes("suma")) role = "guardian";
+
+    if (normalizedEmail.includes("admin")) {
+      role = "admin";
+    } else if (
+      normalizedEmail.includes("guardian") ||
+      normalizedEmail.includes("suma") ||
+      normalizedEmail.includes("neha") ||
+      careLinkId.trim().length > 0
+    ) {
+      role = "guardian";
+    } else if (normalizedEmail.includes("riya")) {
+      role = "user";
+    }
+
     await handleDemoLogin(role, { email, careLinkId });
   }
 
